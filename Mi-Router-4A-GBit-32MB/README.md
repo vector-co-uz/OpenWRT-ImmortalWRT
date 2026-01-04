@@ -40,6 +40,11 @@
 
 ---
 
+### Скачать:
+
+https://github.com/vector-co-uz/OpenWRT-ImmortalWRT/tree/main/Xiaomi-Mi-Router-4A-Gigabit-Edition-32MB-Flash/mi-router-4a-gigabit
+
+---
 ## 📥 Установка
 
 ### Для U-Boot:
