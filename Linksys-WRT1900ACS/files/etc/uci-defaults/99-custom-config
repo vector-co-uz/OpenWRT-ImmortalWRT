@@ -1,0 +1,27 @@
+#!/bin/sh
+
+sed -i '/^[[:space:]]*\(option[[:space:]]\+\)\?check_signature\b/d' /etc/opkg.conf
+
+echo 'check_signature 0' >> /etc/opkg.conf
+
+uci set dropbear.@dropbear[0].Interface=''
+uci set firewall.@defaults[0].flow_offloading='0'
+uci set firewall.@defaults[0].flow_offloading_hw='0'
+uci commit firewall
+
+# Устанавливаем LAN IP 10.10.10.1/24
+uci set network.lan.ipaddr='10.10.10.1'
+uci set network.lan.netmask='255.255.255.0'
+uci commit network
+
+# Отключаем телеметрию и прочий мусор (опционально)
+uci set gluon-nodeinfo.@owner[0].contact='t.me/vector_co_uz'
+uci set system.@system[0].hostname='linksys'
+uci commit system
+
+# Перезагружаем сеть (необязательно, sysupgrade сам применит)
+/etc/init.d/network restart
+
+/etc/init.d/firewall restart
+
+exit 0

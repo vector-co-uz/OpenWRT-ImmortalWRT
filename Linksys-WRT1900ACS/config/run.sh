@@ -23,28 +23,22 @@ mtd \
 fstools \
 partx-utils \
 ca-bundle \
-dnsmasq \
+dnsmasq-full \
 firewall4 \
-iptables-nft \
-ip6tables-nft \
 nftables \
-qos-scripts \
 etherwake \
 batctl-default \
-iw \
 iwinfo \
 iw-full \
 hostapd-common \
-wpad-mesh-openssl \
+wpad-mesh-mbedtls \
 wireless-regdb \
 wifi-scripts \
-luci \
-luci-base \
+ip-tiny \
 luci-compat \
 luci-light \
 luci-lib-base \
 luci-lib-ipkg \
-luci-app-adguardhome \
 luci-app-advanced-reboot \
 luci-app-autoreboot \
 luci-app-dawn \
@@ -54,20 +48,14 @@ luci-app-firewall \
 luci-app-internet-detector \
 luci-app-ksmbd \
 luci-app-package-manager \
-luci-app-qos \
 luci-app-tailscale-community \
-luci-app-ttyd \
 luci-app-wol \
 luci-theme-bootstrap \
-adguardhome \
 block-mount \
 blkid \
 dosfstools \
-exfat-fsck \
-exfat-mkfs \
 ntfs-3g \
 ntfs-3g-utils \
-mkf2fs \
 kmod-fs-ntfs \
 kmod-usb2 \
 kmod-usb3 \
@@ -83,29 +71,33 @@ kmod-usb-net-rndis \
 kmod-usb-net-rtl8152 \
 usbutils \
 luci-proto-3g \
-luci-proto-hnet \
 luci-proto-ncm \
 luci-proto-qmi \
 luci-proto-relay \
+luci-proto-ipv6 \
 nano \
 iperf3 \
 irqbalance \
 smartmontools \
 socat \
-ttyd \
 wget-ssl \
-curl \
 avahi-dbus-daemon \
-rt2800-usb-firmware \
-rt73-usb-firmware \
-rtl8188eu-firmware \
-rtl8192cu-firmware \
 kmod-nft-offload \
 mwlwifi-firmware-88w8864 \
 kmod-mwlwifi \
 kmod-nf-nathelper \
 dropbear \
 kmod-gpio-button-hotplug \
+autocore \
+libustream-mbedtls \
+logd \
+odhcp6c \
+odhcpd-ipv6only \
+kmod-nf-conntrack6 \
+kmod-nf-reject6 \
+ip6tables-nft \
+uclient-fetch \
+internet-detector-mod-modem-restart \
 "
 
 
@@ -116,10 +108,9 @@ PACKAGES="$PACKAGES \
 -default-settings-chn \
 -wpad-openssl \
 -luci-proto-ppp \
--hostapd \
--ntpd \
--dnsmasq-full \
 -luci-app-cpufreq \
+-iw \
+-libustream-openssl \
 "
 
 # Отключаем проверку подписи пакетов (не рекомендуется для продакшена, но удобно при сборке)
@@ -142,6 +133,15 @@ mkdir -p $FILES_DIR/etc/sysctl.d
 cat << 'EOF' > $FILES_DIR/etc/uci-defaults/99-custom-config
 #!/bin/sh
 
+sed -i '/^[[:space:]]*\(option[[:space:]]\+\)\?check_signature\b/d' /etc/opkg.conf
+
+echo 'check_signature 0' >> /etc/opkg.conf
+
+uci set dropbear.@dropbear[0].Interface=''
+uci set firewall.@defaults[0].flow_offloading='0'
+uci set firewall.@defaults[0].flow_offloading_hw='0'
+uci commit firewall
+
 # Устанавливаем LAN IP 10.10.10.1/24
 uci set network.lan.ipaddr='10.10.10.1'
 uci set network.lan.netmask='255.255.255.0'
@@ -154,6 +154,8 @@ uci commit system
 
 # Перезагружаем сеть (необязательно, sysupgrade сам применит)
 /etc/init.d/network restart
+
+/etc/init.d/firewall restart
 
 exit 0
 EOF
