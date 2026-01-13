@@ -42,7 +42,6 @@ luci-lib-ipkg \
 luci-app-advanced-reboot \
 luci-app-autoreboot \
 luci-app-dawn \
-luci-app-diskman \
 luci-app-filemanager \
 luci-app-firewall \
 luci-app-internet-detector \
