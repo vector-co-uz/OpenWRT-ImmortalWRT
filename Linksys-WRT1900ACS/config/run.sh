@@ -1,12 +1,12 @@
 #!/bin/bash
 
 
-set -e  # Установка при ошибке
+set -eВ  # Г“Г±ГІГ Г­Г®ГўГЄГ  ГЇГ°ГЁ Г®ГёГЁГЎГЄГҐ
 
-# ================= НАСТРОЙКИ =================
+# ================= ГЌГЂГ‘Г’ГђГЋГ‰ГЉГ€ =================
 PROFILE="linksys_wrt1900acs"
 
-# Пакеты, которые точно добавляем
+# ГЏГ ГЄГҐГІГ», ГЄГ®ГІГ®Г°Г»ГҐ ГІГ®Г·Г­Г® Г¤Г®ГЎГ ГўГ«ГїГҐГ¬
 PACKAGES="\
 base-files \
 kernel \
@@ -41,14 +41,14 @@ luci-lib-base \
 luci-lib-ipkg \
 luci-app-advanced-reboot \
 luci-app-autoreboot \
-luci-app-dawn \
 luci-app-filemanager \
 luci-app-firewall \
 luci-app-internet-detector \
 luci-app-ksmbd \
 luci-app-package-manager \
-luci-app-tailscale-community \
+luci-app-usteer \
 luci-app-wol \
+luci-app-tailscale-community \
 luci-theme-bootstrap \
 block-mount \
 blkid \
@@ -96,11 +96,13 @@ kmod-nf-conntrack6 \
 kmod-nf-reject6 \
 ip6tables-nft \
 uclient-fetch \
+curl \
 internet-detector-mod-modem-restart \
+tailscale \
 "
 
 
-# Пакеты, которые точно удаляем
+# ГЏГ ГЄГҐГІГ», ГЄГ®ГІГ®Г°Г»ГҐ ГІГ®Г·Г­Г® ГіГ¤Г Г«ГїГҐГ¬
 PACKAGES="$PACKAGES \
 -ppp \
 -ppp-mod-pppoe \
@@ -110,48 +112,50 @@ PACKAGES="$PACKAGES \
 -luci-app-cpufreq \
 -iw \
 -libustream-openssl \
+-btrfs-progs \
+-kmod-fs-btrfs \
 "
 
-# Отключаем проверку подписи пакетов (не рекомендуется для продакшена, но удобно при сборке)
+# ГЋГІГЄГ«ГѕГ·Г ГҐГ¬ ГЇГ°Г®ГўГҐГ°ГЄГі ГЇГ®Г¤ГЇГЁГ±ГЁ ГЇГ ГЄГҐГІГ®Гў (Г­ГҐ Г°ГҐГЄГ®Г¬ГҐГ­Г¤ГіГҐГІГ±Гї Г¤Г«Гї ГЇГ°Г®Г¤Г ГЄГёГҐГ­Г , Г­Г® ГіГ¤Г®ГЎГ­Г® ГЇГ°ГЁ Г±ГЎГ®Г°ГЄГҐ)
 export DISABLE_SIGNATURE_CHECK=1
 
-# Имена для отличия файлов
+# Г€Г¬ГҐГ­Г  Г¤Г«Гї Г®ГІГ«ГЁГ·ГЁГї ГґГ Г©Г«Г®Гў
 SYSUPGRADE_NAME="mesh"
 
-# Папка с overlay-файлами (uci-defaults и т.д.)
+# ГЏГ ГЇГЄГ  Г± overlay-ГґГ Г©Г«Г Г¬ГЁ (uci-defaults ГЁ ГІ.Г¤.)
 FILES_DIR="files"
 
 # =============================================
 
-echo "=== Создаём структуру overlay ==="
+echo "=== Г‘Г®Г§Г¤Г ЕѕГ¬ Г±ГІГ°ГіГЄГІГіГ°Гі overlay ==="
 mkdir -p $FILES_DIR/etc/uci-defaults
 mkdir -p $FILES_DIR/etc/sysctl.d
 
 
-# Скрипт для установки IP 10.10.10.1
+# Г‘ГЄГ°ГЁГЇГІ Г¤Г«Гї ГіГ±ГІГ Г­Г®ГўГЄГЁ IP 10.10.10.1
 cat << 'EOF' > $FILES_DIR/etc/uci-defaults/99-custom-config
 #!/bin/sh
 
 sed -i '/^[[:space:]]*\(option[[:space:]]\+\)\?check_signature\b/d' /etc/opkg.conf
 
-echo 'check_signature 0' >> /etc/opkg.conf
+echo '#option check_signature' >> /etc/opkg.conf
 
 uci set dropbear.@dropbear[0].Interface=''
 uci set firewall.@defaults[0].flow_offloading='0'
 uci set firewall.@defaults[0].flow_offloading_hw='0'
 uci commit firewall
 
-# Устанавливаем LAN IP 10.10.10.1/24
+# Г“Г±ГІГ Г­Г ГўГ«ГЁГўГ ГҐГ¬ LAN IP 10.10.10.1/24
 uci set network.lan.ipaddr='10.10.10.1'
 uci set network.lan.netmask='255.255.255.0'
 uci commit network
 
-# Отключаем телеметрию и прочий мусор (опционально)
+# ГЋГІГЄГ«ГѕГ·Г ГҐГ¬ ГІГҐГ«ГҐГ¬ГҐГІГ°ГЁГѕ ГЁ ГЇГ°Г®Г·ГЁГ© Г¬ГіГ±Г®Г° (Г®ГЇГ¶ГЁГ®Г­Г Г«ГјГ­Г®)
 uci set gluon-nodeinfo.@owner[0].contact='t.me/vector_co_uz'
 uci set system.@system[0].hostname='linksys'
 uci commit system
 
-# Перезагружаем сеть (необязательно, sysupgrade сам применит)
+# ГЏГҐГ°ГҐГ§Г ГЈГ°ГіГ¦Г ГҐГ¬ Г±ГҐГІГј (Г­ГҐГ®ГЎГїГ§Г ГІГҐГ«ГјГ­Г®, sysupgrade Г±Г Г¬ ГЇГ°ГЁГ¬ГҐГ­ГЁГІ)
 /etc/init.d/network restart
 
 /etc/init.d/firewall restart
@@ -161,20 +165,14 @@ EOF
 
 chmod +x $FILES_DIR/etc/uci-defaults/99-custom-config
 
-echo "=== Сборка 1: sysupgrade.bin ==="
-make image PROFILE="$PROFILE" \
-    PACKAGES="$PACKAGES tailscale " \
-    FILES="$FILES_DIR/" \
-    IPKG_DIR=ipks \
-    EXTRA_IMAGE_NAME="$SYSUPGRADE_NAME" \
-#    ROOTFS_PARTSIZE=$ROOTFS_SIZE
 
-echo "=== Всё готово! ==="
-echo "Файлы находятся в: bin/targets/mvebu/cortexa9"
-echo ""
-echo "После загрузки любой из прошивок:"
-echo "   • IP: 10.10.11.1"
-echo "   • LuCI на русском"
-echo "   • Полный набор mesh-пакетов (DAWN, relay и т.д.)"
+echo "=== Г‘ГЎГ®Г°ГЄГ  1: sysupgrade.bin ==="
+make image PROFILE="$PROFILE" \
+В  В  PACKAGES="$PACKAGES" \
+В  В  FILES="$FILES_DIR/" \
+В  В  IPKG_DIR=ipks \
+В  В  EXTRA_IMAGE_NAME="$SYSUPGRADE_NAME" \
+#В  В  ROOTFS_PARTSIZE=$ROOTFS_SIZE
 
 exit 0
+
